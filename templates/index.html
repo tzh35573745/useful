@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全文件传输</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        /* 标签页样式 */
+        .tab-container {
+            margin: 20px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            background-color: #f9f9f9;
+            color: #666;
+        }
+        .tab.active {
+            background-color: white;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 15px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .file-input {
+            margin: 20px 0;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .progress {
+            margin: 15px 0;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+        }
+        .progress-bar.processing {
+            background-color: #2196F3;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .success {
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+        }
+        .error {
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
+        .info {
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .file-list {
+            margin: 15px 0;
+        }
+        .file-item {
+            margin: 5px 0;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .upload-file-item {
+            margin: 5px 0;
+            padding: 12px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .file-item-info {
+            flex: 1;
+        }
+        .file-item-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .file-item-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .file-item-action {
+            margin-left: 10px;
+        }
+        .download-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .download-btn:hover {
+            background-color: #1976D2;
+        }
+        .file-progress {
+            margin-top: 5px;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .file-progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .processing-text {
+            font-style: italic;
+            color: #666;
+            margin-top: 5px;
+        }
+        .refresh-btn {
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: background-color 0.3s;
+        }
+        .refresh-btn:hover {
+            background-color: #f57c00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>安全文件传输</h1>
+        <div class="info">
+            <p>选择要发送的文件，系统会自动进行加密传输。</p>
+        </div>
+        
+        <!-- 标签页 -->
+        <div class="tab-container">
+            <div class="tab active" onclick="switchTab('upload')">手机 → 电脑</div>
+            <div class="tab" onclick="switchTab('download')">电脑 → 手机</div>
+        </div>
+        
+        <!-- 上传标签内容 -->
+        <div id="upload" class="tab-content active">
+            <!-- 文件选择 -->
+            <div class="file-input">
+                <input type="file" id="fileInput" name="file" multiple>
+            </div>
+            
+            <!-- 上传按钮 -->
+            <button id="uploadBtn" onclick="uploadFiles()">开始上传</button>
+            
+            <!-- 状态信息 -->
+            <div id="status" class="status" style="display: none;"></div>
+            
+            <!-- 服务器处理提示 -->
+            <div id="processingText" class="processing-text" style="display: none;">服务器正在处理文件，请稍候...</div>
+            
+            <!-- 文件列表和进度 -->
+            <div id="fileList" class="file-list"></div>
+            
+            <!-- 结果显示 -->
+            <div id="result"></div>
+        </div>
+        
+        <!-- 下载标签内容 -->
+        <div id="download" class="tab-content">
+            <!-- 刷新按钮 -->
+            <button class="refresh-btn" onclick="loadSharedFiles()">刷新文件列表</button>
+            
+            <!-- 状态信息 -->
+            <div id="downloadStatus" class="status" style="display: none;"></div>
+            
+            <!-- 共享文件列表 -->
+            <div id="sharedFileList" class="file-list"></div>
+            
+            <!-- 结果显示 -->
+            <div id="downloadResult"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const statusDiv = document.getElementById('status');
+        const processingText = document.getElementById('processingText');
+        const fileListDiv = document.getElementById('fileList');
+        const resultDiv = document.getElementById('result');
+        const downloadStatusDiv = document.getElementById('downloadStatus');
+        const sharedFileListDiv = document.getElementById('sharedFileList');
+        const downloadResultDiv = document.getElementById('downloadResult');
+        
+        // 显示状态信息
+        function showStatus(message, elementId = 'status') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+        
+        // 隐藏状态信息
+        function hideStatus(elementId = 'status') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'none';
+        }
+        
+        // 显示结果
+        function showResult(message, type, elementId = 'result') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        // 标签页切换
+        function switchTab(tabName) {
+            // 移除所有标签页的active类
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // 移除所有内容的active类
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // 添加当前标签页的active类
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // 如果切换到下载标签，自动加载文件列表
+            if (tabName === 'download') {
+                loadSharedFiles();
+            }
+        }
+        
+        // 更新单个文件进度条
+        function updateFileProgress(fileId, percent) {
+            const fileProgressBar = document.getElementById(`fileProgress-${fileId}`);
+            if (fileProgressBar) {
+                fileProgressBar.style.width = percent + '%';
+            }
+        }
+        
+        // 创建文件列表显示
+        function createFileList(files) {
+            fileListDiv.innerHTML = '';
+            for (let i = 0; i < files.length; i++) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'upload-file-item';
+                fileItem.innerHTML = `
+                    <div>${files[i].name} (${formatFileSize(files[i].size)})</div>
+                    <div class="file-progress">
+                        <div class="file-progress-bar" id="fileProgress-${i}"></div>
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        <span id="fileSpeed-${i}">速度: -- KB/s</span>
+                        <span style="margin-left: 10px;" id="fileTimeLeft-${i}">剩余时间: --</span>
+                    </div>
+                `;
+                fileListDiv.appendChild(fileItem);
+            }
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+        
+        // 异步上传文件
+        async function uploadFiles() {
+            const files = fileInput.files;
+            if (files.length === 0) {
+                showResult('请先选择文件', 'error');
+                return;
+            }
+            
+            // 重置UI
+            showResult('', '');
+            uploadBtn.disabled = true;
+            createFileList(files);
+            
+            // 显示状态
+            showStatus(`开始上传 ${files.length} 个文件...`);
+            
+            try {
+                // 遍历文件，逐个上传
+                let uploadedCount = 0;
+                
+                // 用于存储最后一个文件的响应
+                let finalResponseHtml = '';
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    
+                    // 更新状态
+                    showStatus(`正在上传文件 ${i + 1}/${files.length}: ${file.name}`);
+                    
+                    // 使用XMLHttpRequest上传单个文件
+                    const responseHtml = await uploadSingleFile(file, i, (loaded, total) => {
+                        // 更新文件进度
+                        const filePercent = Math.round((loaded / total) * 100);
+                        updateFileProgress(i, filePercent);
+                    });
+                    
+                    uploadedCount++;
+                    finalResponseHtml = responseHtml; // 保存最后一个文件的响应
+                }
+                
+                // 显示服务器处理提示
+                showStatus('所有文件传输完成，服务器正在处理...');
+                processingText.style.display = 'block';
+                
+                // 显示结果页面
+                document.open();
+                document.write(finalResponseHtml);
+                document.close();
+                
+            } catch (error) {
+                showResult(`上传失败: ${error.message}`, 'error');
+                showStatus('');
+                processingText.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        // 上传单个文件
+        function uploadSingleFile(file, fileIndex, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                
+                // 上传开始时间
+                let startTime = Date.now();
+                // 上次计算速度的时间
+                let lastTime = startTime;
+                // 上次上传的字节数
+                let lastLoaded = 0;
+                // 平均速度（KB/s）
+                let averageSpeed = 0;
+                // 速度历史记录，用于平滑计算
+                let speedHistory = [];
+                
+                // 更新速度和剩余时间显示
+                function updateSpeedAndTime(loaded, total) {
+                    const currentTime = Date.now();
+                    const elapsed = (currentTime - lastTime) / 1000; // 秒
+                    
+                    if (elapsed > 0.5) { // 每0.5秒更新一次
+                        const bytesSinceLast = loaded - lastLoaded;
+                        const currentSpeed = bytesSinceLast / elapsed / 1024; // KB/s
+                        
+                        // 保存速度历史，用于平滑计算
+                        speedHistory.push(currentSpeed);
+                        if (speedHistory.length > 10) {
+                            speedHistory.shift(); // 只保留最近10个记录
+                        }
+                        
+                        // 计算平均速度
+                        averageSpeed = speedHistory.reduce((sum, speed) => sum + speed, 0) / speedHistory.length;
+                        
+                        // 更新显示
+                        const speedSpan = document.getElementById(`fileSpeed-${fileIndex}`);
+                        if (speedSpan) {
+                            speedSpan.textContent = `速度: ${averageSpeed.toFixed(1)} KB/s`;
+                        }
+                        
+                        // 计算剩余时间
+                        if (averageSpeed > 0) {
+                            const bytesLeft = total - loaded;
+                            const timeLeftSeconds = bytesLeft / (averageSpeed * 1024);
+                            const timeLeftFormatted = formatTimeLeft(timeLeftSeconds);
+                            
+                            const timeLeftSpan = document.getElementById(`fileTimeLeft-${fileIndex}`);
+                            if (timeLeftSpan) {
+                                timeLeftSpan.textContent = `剩余时间: ${timeLeftFormatted}`;
+                            }
+                        }
+                        
+                        // 更新时间和加载量
+                        lastTime = currentTime;
+                        lastLoaded = loaded;
+                    }
+                }
+                
+                // 格式化剩余时间
+                function formatTimeLeft(seconds) {
+                    if (seconds < 60) {
+                        return `${Math.round(seconds)}秒`;
+                    } else if (seconds < 3600) {
+                        const minutes = Math.floor(seconds / 60);
+                        const secs = Math.round(seconds % 60);
+                        return `${minutes}分${secs}秒`;
+                    } else {
+                        const hours = Math.floor(seconds / 3600);
+                        const minutes = Math.floor((seconds % 3600) / 60);
+                        return `${hours}小时${minutes}分`;
+                    }
+                }
+                
+                // 监听上传进度
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        onProgress(e.loaded, e.total);
+                        updateSpeedAndTime(e.loaded, e.total);
+                    }
+                });
+                
+                // 监听上传完成
+                xhr.addEventListener('load', function() {
+                    // 清除速度和时间显示
+                    const speedSpan = document.getElementById(`fileSpeed-${fileIndex}`);
+                    if (speedSpan) {
+                        speedSpan.textContent = `速度: -- KB/s`;
+                    }
+                    
+                    const timeLeftSpan = document.getElementById(`fileTimeLeft-${fileIndex}`);
+                    if (timeLeftSpan) {
+                        timeLeftSpan.textContent = `剩余时间: --`;
+                    }
+                    
+                    if (xhr.status === 200) {
+                        resolve(xhr.responseText);
+                    } else {
+                        reject(new Error(`HTTP错误! 状态: ${xhr.status}`));
+                    }
+                });
+                
+                // 监听上传错误
+                xhr.addEventListener('error', function() {
+                    // 清除速度和时间显示
+                    const speedSpan = document.getElementById(`fileSpeed-${fileIndex}`);
+                    if (speedSpan) {
+                        speedSpan.textContent = `速度: -- KB/s`;
+                    }
+                    
+                    const timeLeftSpan = document.getElementById(`fileTimeLeft-${fileIndex}`);
+                    if (timeLeftSpan) {
+                        timeLeftSpan.textContent = `剩余时间: --`;
+                    }
+                    
+                    reject(new Error('上传过程中发生错误'));
+                });
+                
+                // 监听上传取消
+                xhr.addEventListener('abort', function() {
+                    // 清除速度和时间显示
+                    const speedSpan = document.getElementById(`fileSpeed-${fileIndex}`);
+                    if (speedSpan) {
+                        speedSpan.textContent = `速度: -- KB/s`;
+                    }
+                    
+                    const timeLeftSpan = document.getElementById(`fileTimeLeft-${fileIndex}`);
+                    if (timeLeftSpan) {
+                        timeLeftSpan.textContent = `剩余时间: --`;
+                    }
+                    
+                    reject(new Error('上传已取消'));
+                });
+                
+                // 配置请求
+                xhr.open('POST', '/upload');
+                
+                // 发送请求
+                const formData = new FormData();
+                formData.append('file', file);
+                xhr.send(formData);
+            });
+        }
+        
+        // 加载共享文件列表
+        async function loadSharedFiles() {
+            showStatus('正在加载文件列表...', 'downloadStatus');
+            showResult('', '', 'downloadResult');
+            
+            try {
+                const response = await fetch('/files');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const files = data.files;
+                    if (files.length === 0) {
+                        sharedFileListDiv.innerHTML = '<div class="info">暂无共享文件</div>';
+                    } else {
+                        sharedFileListDiv.innerHTML = '';
+                        files.forEach(file => {
+                            const fileItem = document.createElement('div');
+                            fileItem.className = 'file-item';
+                            fileItem.innerHTML = `
+                                <div class="file-item-info">
+                                    <div class="file-item-name">${file.name}</div>
+                                    <div class="file-item-meta">
+                                        大小: ${formatFileSize(file.size)} | 更新时间: ${file.mtime}
+                                    </div>
+                                </div>
+                                <div class="file-item-action">
+                                    <button class="download-btn" onclick="downloadFile('${file.id}')">下载</button>
+                                </div>
+                            `;
+                            sharedFileListDiv.appendChild(fileItem);
+                        });
+                    }
+                    hideStatus('downloadStatus');
+                } else {
+                    showResult(`加载文件列表失败: ${data.message}`, 'error', 'downloadResult');
+                    hideStatus('downloadStatus');
+                }
+            } catch (error) {
+                showResult(`加载文件列表失败: ${error.message}`, 'error', 'downloadResult');
+                hideStatus('downloadStatus');
+            }
+        }
+        
+        // 下载文件
+        function downloadFile(fileId) {
+            showResult(`正在下载文件...`, 'info', 'downloadResult');
+            
+            // 创建下载链接并触发下载
+            const downloadLink = document.createElement('a');
+            downloadLink.href = `/download/${fileId}`;
+            downloadLink.download = fileId;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            
+            showResult(`文件下载已开始`, 'success', 'downloadResult');
+        }
+        
+        // 页面加载完成后，加载共享文件列表
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化时加载一次共享文件列表
+            loadSharedFiles();
+        });
+    </script>
+</body>
+</html>
