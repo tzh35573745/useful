@@ -106,8 +106,6 @@ def main():
     print("4. 按 Ctrl+C 停止服务器")
     print("5. 如需修改端口，请编辑 config.json 文件")
     print("=" * 50)
-    print()
-    input("按任意键启动服务器...")
     
     # 启动服务器
     print(f"6. 正在启动服务器，端口: {port}...")
