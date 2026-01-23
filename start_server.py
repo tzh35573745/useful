@@ -81,19 +81,7 @@ def main():
         print("尝试继续...")
     print()
     
-    # 显示IP地址
-    print("5. 本地IP地址信息:")
-    try:
-        if sys.platform == "win32":
-            result = subprocess.run(["ipconfig"], capture_output=True, text=True, shell=True)
-            for line in result.stdout.splitlines():
-                if "IPv4" in line:
-                    print(f"   {line.strip()}")
-        else:
-            result = subprocess.run(["ifconfig"], capture_output=True, text=True, shell=True)
-            print(result.stdout)
-    except Exception as e:
-        print(f"无法获取IP地址: {e}")
+
     
     print()
     print("=" * 50)
@@ -106,6 +94,19 @@ def main():
     print("4. 按 Ctrl+C 停止服务器")
     print("5. 如需修改端口，请编辑 config.json 文件")
     print("=" * 50)
+    # 显示IP地址
+    print("本地IP地址信息:")
+    try:
+        if sys.platform == "win32":
+            result = subprocess.run(["ipconfig"], capture_output=True, text=True, shell=True)
+            for line in result.stdout.splitlines():
+                if "IPv4" in line:
+                    print(f"   {line.strip()}")
+        else:
+            result = subprocess.run(["ifconfig"], capture_output=True, text=True, shell=True)
+            print(result.stdout)
+    except Exception as e:
+        print(f"无法获取IP地址: {e}")
     
     # 启动服务器
     print(f"6. 正在启动服务器，端口: {port}...")
